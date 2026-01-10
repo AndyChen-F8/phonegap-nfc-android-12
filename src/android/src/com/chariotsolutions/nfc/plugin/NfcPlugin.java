@@ -953,29 +953,36 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
     //     });
     // }
     private void connect(final String tech, final int timeout, final CallbackContext callbackContext) {
-        cordova.getThreadPool().execute(() -> {
-            try {
-                if (currentTag == null) {
-                    callbackContext.error("No tag scanned");
-                    return;    
-                }
-
-                if (!tech.equals("android.nfc.tech.IsoDep")) {
-                    callbackContext.error("Only IsoDep supported");
-                    return;
-                }
-
-                isoDep = IsoDep.get(currentTag);
-                isoDep.connect();
-                isoDep.setTimeout(timeout);
-                Log.d("NFC", "connect() currentTag=" + currentTag);
-
-                callbackContext.success();
-            } catch (Exception e) {
-                callbackContext.error(e.getMessage());
+    cordova.getThreadPool().execute(() -> {
+        try {
+            if (currentTag == null) {
+                callbackContext.error("No tag scanned");
+                return;
             }
-        });
-    }
+
+            if (!tech.equals("android.nfc.tech.IsoDep")) {
+                callbackContext.error("Only IsoDep supported");
+                return;
+            }
+
+            isoDep = IsoDep.get(currentTag);
+            isoDep.connect();
+            isoDep.setTimeout(timeout);
+
+            Log.d("NFC", "connect() currentTag=" + currentTag);
+
+            JSONObject info = new JSONObject();
+            info.put("tech", "IsoDep");
+            info.put("timeout", isoDep.getTimeout());
+
+            callbackContext.success(info);
+
+        } catch (Exception e) {
+            callbackContext.error(e.getMessage());
+        }
+    });
+}
+
 
     // Call tagTech setTimeout with reflection or fail silently
     private void setTimeout(int timeout) {
