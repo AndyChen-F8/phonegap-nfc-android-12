@@ -1061,21 +1061,27 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
     //     });
     // }
 
-    private void transceive(final byte[] data, final CallbackContext callbackContext) {
-    cordova.getThreadPool().execute(() -> {
+     public void transceive(byte[] data, CallbackContext callbackContext) {
         try {
-            if (isoDep == null || !isoDep.isConnected()) {
-                callbackContext.error("IsoDep not connected");
+            if (isoDep == null) {
+                Log.e("NFC", "IsoDep is NULL");
+                callbackContext.error("IsoDep NULL");
                 return;
             }
 
-            byte[] response = isoDep.transceive(data);
-            callbackContext.success(response);
+            Log.d("NFC", "APDU SEND = " + bytesToHex(data));
+
+            byte[] resp = isoDep.transceive(data);
+
+            Log.d("NFC", "APDU RECV = " + bytesToHex(resp));
+
+            callbackContext.success(bytesToHex(resp));
+
         } catch (Exception e) {
+            Log.e("NFC", "TRANSCEIVE ERROR", e);
             callbackContext.error(e.getMessage());
         }
-    });
-}
+    }
 
 
 }
