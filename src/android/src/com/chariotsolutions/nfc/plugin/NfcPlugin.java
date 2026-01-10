@@ -237,6 +237,7 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
     private NfcAdapter.ReaderCallback callback = new NfcAdapter.ReaderCallback() {
         @Override
         public void onTagDiscovered(Tag tag) {
+            Log.d("NFC", "onTagDiscovered tag=" + tag);
             currentTag = tag;
             JSONObject json;
 
@@ -963,6 +964,7 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
                 isoDep = IsoDep.get(currentTag);
                 isoDep.connect();
                 isoDep.setTimeout(timeout);
+                Log.d("NFC", "connect() currentTag=" + currentTag);
 
                 callbackContext.success();
             } catch (Exception e) {
