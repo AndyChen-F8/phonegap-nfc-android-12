@@ -85,6 +85,8 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
 
     private Intent savedIntent = null;
     private int lastFlags = 0;
+    private Tag currentTag;
+
 
     private CallbackContext readerModeCallback;
     private CallbackContext channelCallback;
@@ -245,6 +247,8 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
                 json = Util.tagToJSON(tag);
             }
 
+            currentTag = tag;
+            
             Intent tagIntent = new Intent();
             tagIntent.putExtra(NfcAdapter.EXTRA_TAG, tag);
             setIntent(tagIntent);
@@ -879,10 +883,11 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
         this.cordova.getThreadPool().execute(() -> {
             try {
 
-                Tag tag = getIntent().getParcelableExtra(NfcAdapter.EXTRA_TAG);
-                if (tag == null && savedIntent != null) {
-                    tag = savedIntent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
-                }
+                // Tag tag = getIntent().getParcelableExtra(NfcAdapter.EXTRA_TAG);
+                // if (tag == null && savedIntent != null) {
+                //     tag = savedIntent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
+                // }
+                Tag tag = currentTag;
 
                 if (tag == null) {
                     Log.e(TAG, "No Tag");
