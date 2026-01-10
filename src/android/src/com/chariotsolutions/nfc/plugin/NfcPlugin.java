@@ -84,6 +84,7 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
     private PendingIntent pendingIntent = null;
 
     private Intent savedIntent = null;
+    private int lastFlags = 0;
 
     private CallbackContext readerModeCallback;
     private CallbackContext channelCallback;
