@@ -186,9 +186,13 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
             connect(tech, timeout, callbackContext);
 
         } else if (action.equalsIgnoreCase(TRANSCEIVE)) {
-            CordovaArgs args = new CordovaArgs(data); // execute is using the old signature with JSON data
+            // CordovaArgs args = new CordovaArgs(data); // execute is using the old signature with JSON data
 
-            byte[] command = args.getArrayBuffer(0);
+            // byte[] command = args.getArrayBuffer(0);
+            // transceive(command, callbackContext);
+
+            JSONArray arr = data.getJSONArray(0);
+            byte[] command = jsonArrayToByteArray(arr);
             transceive(command, callbackContext);
 
         } else if (action.equalsIgnoreCase(CLOSE)) {
@@ -1084,12 +1088,20 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
     }
 
     private static String bytesToHex(byte[] bytes) {
-    StringBuilder sb = new StringBuilder();
-    for (byte b : bytes) {
-        sb.append(String.format("%02X", b));
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            sb.append(String.format("%02X", b));
+        }
+        return sb.toString();
     }
-    return sb.toString();
-}
+
+    private byte[] jsonArrayToByteArray(JSONArray arr) throws JSONException {
+        byte[] bytes = new byte[arr.length()];
+        for (int i = 0; i < arr.length(); i++) {
+        bytes[i] = (byte) arr.getInt(i);
+        }
+        return bytes;
+    }
 
 
 }
