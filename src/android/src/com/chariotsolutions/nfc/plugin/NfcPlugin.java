@@ -550,7 +550,7 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
                     // don't start NFC unless some intent filters or tech lists have been added,
                     // because empty lists act as wildcards and receives ALL scan events
                     if (intentFilters.length > 0 || techLists.length > 0) {
-                        nfcAdapter.enableForegroundDispatch(getActivity(), getPendingIntent(), intentFilters, techLists);
+                        // nfcAdapter.enableForegroundDispatch(getActivity(), getPendingIntent(), intentFilters, techLists);
                     }
 
                     if (p2pMessage != null) {
@@ -818,9 +818,15 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
 
     @Override
     public void onResume(boolean multitasking) {
-        Log.d(TAG, "onResume " + getIntent());
+        // Log.d(TAG, "onResume " + getIntent());
+        // super.onResume(multitasking);
+        // startNfc();
         super.onResume(multitasking);
-        startNfc();
+
+        if (readerModeCallback != null) {
+            NfcAdapter nfcAdapter = NfcAdapter.getDefaultAdapter(getActivity());
+            nfcAdapter.enableReaderMode(getActivity(), callback, lastFlags, null);
+        }
     }
 
     @Override
