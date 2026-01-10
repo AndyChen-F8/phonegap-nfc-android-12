@@ -86,7 +86,7 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
     private Intent savedIntent = null;
     private int lastFlags = 0;
     private Tag currentTag;
-
+    private IsoDep isoDep;
 
     private CallbackContext readerModeCallback;
     private CallbackContext channelCallback;
@@ -235,7 +235,7 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
     private NfcAdapter.ReaderCallback callback = new NfcAdapter.ReaderCallback() {
         @Override
         public void onTagDiscovered(Tag tag) {
-
+            currentTag = tag;
             JSONObject json;
 
             // If the tag supports Ndef, try and return an Ndef message
@@ -247,11 +247,11 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
                 json = Util.tagToJSON(tag);
             }
 
-            currentTag = tag;
             
-            Intent tagIntent = new Intent();
-            tagIntent.putExtra(NfcAdapter.EXTRA_TAG, tag);
-            setIntent(tagIntent);
+            
+            // Intent tagIntent = new Intent();
+            // tagIntent.putExtra(NfcAdapter.EXTRA_TAG, tag);
+            // setIntent(tagIntent);
 
             PluginResult result = new PluginResult(PluginResult.Status.OK, json);
             result.setKeepCallback(true);
@@ -879,68 +879,91 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
      * @param timeout         tag timeout
      * @param callbackContext Cordova callback context
      */
+    // private void connect(final String tech, final int timeout, final CallbackContext callbackContext) {
+    //     this.cordova.getThreadPool().execute(() -> {
+    //         try {
+
+    //             // Tag tag = getIntent().getParcelableExtra(NfcAdapter.EXTRA_TAG);
+    //             // if (tag == null && savedIntent != null) {
+    //             //     tag = savedIntent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
+    //             // }
+    //             Tag tag = currentTag;
+
+    //             if (tag == null) {
+    //                 Log.e(TAG, "No Tag");
+    //                 callbackContext.error("No Tag");
+    //                 return;
+    //             }
+
+    //             JSONObject resultObject = new JSONObject();
+
+    //             // get technologies supported by this tag
+    //             List<String> techList = Arrays.asList(tag.getTechList());
+    //             if (techList.contains(tech)) {
+    //                 // use reflection to call the static function Tech.get(tag)
+    //                 tagTechnologyClass = Class.forName(tech);
+    //                 Method method = tagTechnologyClass.getMethod("get", Tag.class);
+    //                 tagTechnology = (TagTechnology) method.invoke(null, tag);
+
+    //                 // If the tech supports it, return maxTransceiveLength and return it to the user
+    //                 try {
+    //                     Method maxTransceiveLengthMethod = tagTechnologyClass.getMethod("getMaxTransceiveLength");
+    //                     resultObject.put("maxTransceiveLength", maxTransceiveLengthMethod.invoke(tagTechnology));
+    //                 } catch(NoSuchMethodException e) {
+    //                     // Some technologies do not support this, so just ignore.
+    //                 } catch(JSONException e) {
+    //                     Log.e(TAG, "Error serializing JSON", e);
+    //                 }
+    //             }
+
+    //             if (tagTechnology == null) {
+    //                 callbackContext.error("Tag does not support " + tech);
+    //                 return;
+    //             }
+
+    //             tagTechnology.connect();
+    //             setTimeout(timeout);
+    //             callbackContext.success(resultObject);
+
+    //         } catch (IOException ex) {
+    //             Log.e(TAG, "Tag connection failed", ex);
+    //             callbackContext.error("Tag connection failed");
+
+    //             // Users should never get these reflection errors
+    //         } catch (ClassNotFoundException e) {
+    //             Log.e(TAG, e.getMessage(), e);
+    //             callbackContext.error(e.getMessage());
+    //         } catch (NoSuchMethodException e) {
+    //             Log.e(TAG, e.getMessage(), e);
+    //             callbackContext.error(e.getMessage());
+    //         } catch (IllegalAccessException e) {
+    //             Log.e(TAG, e.getMessage(), e);
+    //             callbackContext.error(e.getMessage());
+    //         } catch (InvocationTargetException e) {
+    //             Log.e(TAG, e.getMessage(), e);
+    //             callbackContext.error(e.getMessage());
+    //         }
+    //     });
+    // }
     private void connect(final String tech, final int timeout, final CallbackContext callbackContext) {
-        this.cordova.getThreadPool().execute(() -> {
+        cordova.getThreadPool().execute(() -> {
             try {
+                if (currentTag == null) {
+                    callbackContext.error("No tag scanned");
+                    return;    
+                }
 
-                // Tag tag = getIntent().getParcelableExtra(NfcAdapter.EXTRA_TAG);
-                // if (tag == null && savedIntent != null) {
-                //     tag = savedIntent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
-                // }
-                Tag tag = currentTag;
-
-                if (tag == null) {
-                    Log.e(TAG, "No Tag");
-                    callbackContext.error("No Tag");
+                if (!tech.equals("android.nfc.tech.IsoDep")) {
+                    callbackContext.error("Only IsoDep supported");
                     return;
                 }
 
-                JSONObject resultObject = new JSONObject();
+                isoDep = IsoDep.get(currentTag);
+                isoDep.connect();
+                isoDep.setTimeout(timeout);
 
-                // get technologies supported by this tag
-                List<String> techList = Arrays.asList(tag.getTechList());
-                if (techList.contains(tech)) {
-                    // use reflection to call the static function Tech.get(tag)
-                    tagTechnologyClass = Class.forName(tech);
-                    Method method = tagTechnologyClass.getMethod("get", Tag.class);
-                    tagTechnology = (TagTechnology) method.invoke(null, tag);
-
-                    // If the tech supports it, return maxTransceiveLength and return it to the user
-                    try {
-                        Method maxTransceiveLengthMethod = tagTechnologyClass.getMethod("getMaxTransceiveLength");
-                        resultObject.put("maxTransceiveLength", maxTransceiveLengthMethod.invoke(tagTechnology));
-                    } catch(NoSuchMethodException e) {
-                        // Some technologies do not support this, so just ignore.
-                    } catch(JSONException e) {
-                        Log.e(TAG, "Error serializing JSON", e);
-                    }
-                }
-
-                if (tagTechnology == null) {
-                    callbackContext.error("Tag does not support " + tech);
-                    return;
-                }
-
-                tagTechnology.connect();
-                setTimeout(timeout);
-                callbackContext.success(resultObject);
-
-            } catch (IOException ex) {
-                Log.e(TAG, "Tag connection failed", ex);
-                callbackContext.error("Tag connection failed");
-
-                // Users should never get these reflection errors
-            } catch (ClassNotFoundException e) {
-                Log.e(TAG, e.getMessage(), e);
-                callbackContext.error(e.getMessage());
-            } catch (NoSuchMethodException e) {
-                Log.e(TAG, e.getMessage(), e);
-                callbackContext.error(e.getMessage());
-            } catch (IllegalAccessException e) {
-                Log.e(TAG, e.getMessage(), e);
-                callbackContext.error(e.getMessage());
-            } catch (InvocationTargetException e) {
-                Log.e(TAG, e.getMessage(), e);
+                callbackContext.success();
+            } catch (Exception e) {
                 callbackContext.error(e.getMessage());
             }
         });
@@ -994,44 +1017,61 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
      * @param data            byte[] command to be passed to the tag
      * @param callbackContext Cordova callback context
      */
+    // private void transceive(final byte[] data, final CallbackContext callbackContext) {
+    //     cordova.getThreadPool().execute(() -> {
+    //         try {
+    //             if (tagTechnology == null) {
+    //                 Log.e(TAG, "No Tech");
+    //                 callbackContext.error("No Tech");
+    //                 return;
+    //             }
+    //             if (!tagTechnology.isConnected()) {
+    //                 Log.e(TAG, "Not connected");
+    //                 callbackContext.error("Not connected");
+    //                 return;
+    //             }
+
+    //             // Use reflection so we can support many tag types
+    //             Method transceiveMethod = tagTechnologyClass.getMethod("transceive", byte[].class);
+    //             @SuppressWarnings("PrimitiveArrayArgumentToVarargsMethod")
+    //             byte[] response = (byte[]) transceiveMethod.invoke(tagTechnology, data);
+
+    //             callbackContext.success(response);
+
+    //         } catch (NoSuchMethodException e) {
+    //             String error = "TagTechnology " + tagTechnologyClass.getName() + " does not have a transceive function";
+    //             Log.e(TAG, error, e);
+    //             callbackContext.error(error);
+    //         } catch (NullPointerException e) {
+    //             // This can happen if the tag has been closed while we're still working with it from the thread pool.
+    //             Log.e(TAG, e.getMessage(), e);
+    //             callbackContext.error(e.getMessage());
+    //         } catch (IllegalAccessException e) {
+    //             Log.e(TAG, e.getMessage(), e);
+    //             callbackContext.error(e.getMessage());
+    //         } catch (InvocationTargetException e) {
+    //             Log.e(TAG, e.getMessage(), e);
+    //             Throwable cause = e.getCause();
+    //             callbackContext.error(cause.getMessage());
+    //         }
+    //     });
+    // }
+
     private void transceive(final byte[] data, final CallbackContext callbackContext) {
-        cordova.getThreadPool().execute(() -> {
-            try {
-                if (tagTechnology == null) {
-                    Log.e(TAG, "No Tech");
-                    callbackContext.error("No Tech");
-                    return;
-                }
-                if (!tagTechnology.isConnected()) {
-                    Log.e(TAG, "Not connected");
-                    callbackContext.error("Not connected");
-                    return;
-                }
-
-                // Use reflection so we can support many tag types
-                Method transceiveMethod = tagTechnologyClass.getMethod("transceive", byte[].class);
-                @SuppressWarnings("PrimitiveArrayArgumentToVarargsMethod")
-                byte[] response = (byte[]) transceiveMethod.invoke(tagTechnology, data);
-
-                callbackContext.success(response);
-
-            } catch (NoSuchMethodException e) {
-                String error = "TagTechnology " + tagTechnologyClass.getName() + " does not have a transceive function";
-                Log.e(TAG, error, e);
-                callbackContext.error(error);
-            } catch (NullPointerException e) {
-                // This can happen if the tag has been closed while we're still working with it from the thread pool.
-                Log.e(TAG, e.getMessage(), e);
-                callbackContext.error(e.getMessage());
-            } catch (IllegalAccessException e) {
-                Log.e(TAG, e.getMessage(), e);
-                callbackContext.error(e.getMessage());
-            } catch (InvocationTargetException e) {
-                Log.e(TAG, e.getMessage(), e);
-                Throwable cause = e.getCause();
-                callbackContext.error(cause.getMessage());
+    cordova.getThreadPool().execute(() -> {
+        try {
+            if (isoDep == null || !isoDep.isConnected()) {
+                callbackContext.error("IsoDep not connected");
+                return;
             }
-        });
-    }
+
+            byte[] response = isoDep.transceive(data);
+            callbackContext.success(response);
+        } catch (Exception e) {
+            callbackContext.error(e.getMessage());
+        }
+    });
+}
+
 
 }
