@@ -243,6 +243,19 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
         public void onTagDiscovered(Tag tag) {
             Log.d("NFC", "onTagDiscovered tag=" + tag);
             currentTag = tag;
+            try {
+                isoDep = IsoDep.get(tag);
+                if (isoDep != null) {
+                    isoDep.connect();
+                    isoDep.setTimeout(5000);
+                    Log.d("NFC", "IsoDep connected");
+                } else {
+                    Log.e("NFC", "IsoDep not supported by this tag");
+                }
+            } catch (Exception e) {
+                Log.e("NFC", "IsoDep connect failed", e);
+            }
+            
             JSONObject json;
 
             // If the tag supports Ndef, try and return an Ndef message
