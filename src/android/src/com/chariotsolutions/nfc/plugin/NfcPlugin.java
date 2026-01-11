@@ -1085,7 +1085,8 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
     //     });
     // }
 
-     public void transceive(byte[] data, CallbackContext callbackContext) {
+    public void transceive(byte[] data, CallbackContext callbackContext) {
+    cordova.getThreadPool().execute(() -> {
         try {
             if (isoDep == null) {
                 Log.e("NFC", "IsoDep is NULL");
@@ -1093,6 +1094,7 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
                 return;
             }
 
+            // Log APDU pasti muncul
             Log.i("NFC", "APDU SEND = " + bytesToHex(data));
 
             byte[] resp = isoDep.transceive(data);
@@ -1101,12 +1103,19 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
 
             JSONObject json = new JSONObject();
             json.put("resp", bytesToHex(resp));
-            callbackContext.success(json);
 
-        } catch (Exception e) {
-            Log.e("NFC", "TRANSCEIVE ERROR", e);
-            callbackContext.error(e.getMessage());
-        }
+            // Kirim callback ke JS di main thread
+            cordova.getActivity().runOnUiThread(() -> {
+                callbackContext.success(json);
+            });
+
+            } catch (Exception e) {
+                Log.e("NFC", "TRANSCEIVE ERROR", e);
+                cordova.getActivity().runOnUiThread(() -> {
+                    callbackContext.error(e.getMessage());
+                });
+            }
+        });
     }
 
     private static String bytesToHex(byte[] bytes) {
