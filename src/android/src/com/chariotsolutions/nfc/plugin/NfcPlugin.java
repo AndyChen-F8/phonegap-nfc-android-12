@@ -253,8 +253,25 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
                 } else {
                     Log.e("NFC", "IsoDep not supported by this tag");
                 }
-            } catch (Exception e) {
-                Log.e("NFC", "IsoDep connect failed", e);
+                // ---- langsung transceive di sini ----
+                byte[] apduSelectEmoney = hexStringToByteArray("00A40400080000000000000001");
+                Log.d("NFC", "Sending APDU: " + bytesToHex(apduSelectEmoney));
+
+                byte[] resp = isoDep.transceive(apduSelectEmoney);
+                Log.d("NFC", "APDU Response: " + bytesToHex(resp));
+
+                // contoh lanjut APDU read card info
+                byte[] apduReadCard = hexStringToByteArray("00B300003F");
+                Log.d("NFC", "Sending APDU read card: " + bytesToHex(apduReadCard));
+
+                byte[] respRead = isoDep.transceive(apduReadCard);
+                Log.d("NFC", "Read Card Response: " + bytesToHex(respRead));
+
+                isoDep.close();
+                Log.d("NFC", "IsoDep disconnected");
+                
+            }catch (Exception e) {
+                 Log.e("NFC", "IsoDep connect failed", e);
             }
             
             JSONObject json;
