@@ -261,11 +261,11 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
                 Log.d("NFC", "APDU Response: " + bytesToHex(resp));
 
                 // contoh lanjut APDU read card info
-                byte[] apduReadCard = hexStringToByteArray("00B300003F");
-                Log.d("NFC", "Sending APDU read card: " + bytesToHex(apduReadCard));
+                // byte[] apduReadCard = hexStringToByteArray("00B300003F");
+                // Log.d("NFC", "Sending APDU read card: " + bytesToHex(apduReadCard));
 
-                byte[] respRead = isoDep.transceive(apduReadCard);
-                Log.d("NFC", "Read Card Response: " + bytesToHex(respRead));
+                // byte[] respRead = isoDep.transceive(apduReadCard);
+                // Log.d("NFC", "Read Card Response: " + bytesToHex(respRead));
 
                 isoDep.close();
                 Log.d("NFC", "IsoDep disconnected");
@@ -1160,6 +1160,17 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
         }
         return bytes;
     }
+
+    public static byte[] hexStringToByteArray(String s) {
+        int len = s.length();
+        byte[] data = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
+                             + Character.digit(s.charAt(i+1), 16));
+        }
+        return data;
+    }
+
 
 
 }
