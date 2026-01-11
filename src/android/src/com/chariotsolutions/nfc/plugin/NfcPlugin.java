@@ -1093,15 +1093,15 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
                 return;
             }
 
-            Log.d("NFC", "APDU SEND = " + bytesToHex(data));
+            Log.i("NFC", "APDU SEND = " + bytesToHex(data));
 
             byte[] resp = isoDep.transceive(data);
 
-            Log.d("NFC", "APDU RECV = " + bytesToHex(resp));
+            Log.i("NFC", "APDU RECV = " + bytesToHex(resp));
 
             JSONObject json = new JSONObject();
             json.put("resp", bytesToHex(resp));
-            callbackContext.success(json.toString());
+            callbackContext.success(json);
 
         } catch (Exception e) {
             Log.e("NFC", "TRANSCEIVE ERROR", e);
