@@ -190,6 +190,7 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
 
             // byte[] command = args.getArrayBuffer(0);
             // transceive(command, callbackContext);
+             Log.i("NFC", "ini tranceive");
 
             JSONArray arr = data.getJSONArray(0);
             byte[] command = jsonArrayToByteArray(arr);
@@ -1095,28 +1096,32 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
             }
 
             // Log APDU pasti muncul
-            Log.i("NFC", "APDU SEND = " + bytesToHex(data));
+            Log.e("NFC", "APDU SEND = " + bytesToHex(data));
+            System.out.println("APDU SEND = " + bytesToHex(data));
 
             byte[] resp = isoDep.transceive(data);
 
-            Log.i("NFC", "APDU RECV = " + bytesToHex(resp));
+            Log.e("NFC", "APDU RECV = " + bytesToHex(resp));
+            System.out.println("APDU RECV = " + bytesToHex(resp));
 
+            // Build JSON string untuk JS
             JSONObject json = new JSONObject();
             json.put("resp", bytesToHex(resp));
+            String jsonString = json.toString();
 
-            // Kirim callback ke JS di main thread
+            // Kirim callback di main thread
             cordova.getActivity().runOnUiThread(() -> {
-                callbackContext.success(json);
+                callbackContext.success(jsonString);
             });
 
-            } catch (Exception e) {
-                Log.e("NFC", "TRANSCEIVE ERROR", e);
-                cordova.getActivity().runOnUiThread(() -> {
-                    callbackContext.error(e.getMessage());
-                });
-            }
-        });
-    }
+        } catch (Exception e) {
+            Log.e("NFC", "TRANSCEIVE ERROR", e);
+            cordova.getActivity().runOnUiThread(() -> {
+                callbackContext.error(e.getMessage());
+            });
+        }
+    });
+}
 
     private static String bytesToHex(byte[] bytes) {
         StringBuilder sb = new StringBuilder();
